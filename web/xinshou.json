@@ -1,0 +1,126 @@
+{"node": {
+    "children": [
+        {
+            "children": [],
+            "leaf": true,
+            "menu": {
+                "id": 1,
+                "menuId": "001",
+                "menuName": "新手",
+                "module": "js.xinshou",
+                "parentId": "",
+                "sortId": 1,
+                "state": true,
+                "tag": "xinshou",
+                "url": "img\/xinshou.jpg"
+            }
+        },
+        {
+            "children": [],
+            "leaf": true,
+            "menu": {
+                "id": 2,
+                "menuId": "002",
+                "menuName": "销售",
+                "module": "js.xiaoshou",
+                "parentId": "",
+                "sortId": 1,
+                "state": true,
+                "tag": "xiaoshou",
+                "url": "img\/xiaoshou.jpg"
+            }
+        },
+        {
+            "children": [],
+            "leaf": true,
+            "menu": {
+                "id": 3,
+                "menuId": "003",
+                "menuName": "进货",
+                "module": "js.jinhuo",
+                "parentId": "",
+                "sortId": 1,
+                "state": true,
+                "tag": "jinhuo",
+                "url": "img\/jinhuo.jpg"
+            }
+        },
+        {
+            "children": [],
+            "leaf": true,
+            "menu": {
+                "id": 4,
+                "menuId": "004",
+                "menuName": "库存",
+                "module": "js.kucun",
+                "parentId": "",
+                "sortId": 1,
+                "state": true,
+                "tag": "kucun",
+                "url": "img\/kucun.jpg"
+            }
+        },
+        {
+            "children": [],
+            "leaf": true,
+            "menu": {
+                "id": 5,
+                "menuId": "005",
+                "menuName": "配送",
+                "module": "js.peisong",
+                "parentId": "",
+                "sortId": 1,
+                "state": true,
+                "tag": "peisong",
+                "url": "img\/peisong.jpg"
+            }
+        },
+        {
+            "children": [],
+            "leaf": true,
+            "menu": {
+                "id": 6,
+                "menuId": "006",
+                "menuName": "会员",
+                "module": "js.huiyuan",
+                "parentId": "",
+                "sortId": 1,
+                "state": true,
+                "tag": "huiyuan",
+                "url": "img\/huiyuan.jpg"
+            }
+        },
+        {
+            "children": [],
+            "leaf": true,
+            "menu": {
+                "id": 7,
+                "menuId": "007",
+                "menuName": "资料",
+                "module": "js.ziliao",
+                "parentId": "",
+                "sortId": 1,
+                "state": true,
+                "tag": "ziliao",
+                "url": "img\/ziliao.png"
+            }
+        },
+        {
+            "children": [],
+            "leaf": true,
+            "menu": {
+                "id": 8,
+                "menuId": "008",
+                "menuName": "职工",
+                "module": "js.zhigong",
+                "parentId": "",
+                "sortId": 1,
+                "state": true,
+                "tag": "zhigong",
+                "url": "img\/zhigong.jpg"
+            }
+        }
+    ],
+    "leaf": false,
+    "menu": null
+}}

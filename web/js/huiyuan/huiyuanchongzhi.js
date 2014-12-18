@@ -1,0 +1,530 @@
+Ext.define("js.huiyuan.huiyuanchongzhi",{
+    extend : "Ext.grid.Panel",
+    renderTo : Ext.getBody(),
+    initComponent : function(){
+        var me = this;
+        var selModel = Ext.create('Ext.selection.CheckboxModel');
+        var store = Ext.create('Ext.data.Store',{
+            id : "mystore",
+            pageSize : 5,
+            proxy: {
+                type : "ajax",
+                url : "/doselect08",
+                reader: {
+                    type : "json",
+                    root : "list",
+                    totalProperty : "rows"
+                }
+            },
+            fields : [
+                {name:"id",type:"Integer"},
+                {name : "payAccountNo",type : "String"},
+                {name : "payBank",type : "String"},
+                {name:"recAccountNo",type:"String"},
+                {name:"recBank",type:"String"},
+                {name:"remark",type:"String"},
+                {name : "totalMoney",type : "BigDecimal"},
+                {name : "supplyTime",format:'Y年m月d日 H:i:s',type : "Timestamp"},
+                {name:"TBaMemberInfoByUserName.userName",type:"String"}
+            ],
+            autoLoad : false,
+            listeners:{
+                beforeload:function(store,operation){
+                    var name=Ext.getCmp('text1');
+                    if(name){
+                        if(name.getValue()){
+                            if(operation.params){
+                                operation.params.text=name.getValue();
+                            }else{
+                                operation.params = {text: name.getValue()};
+
+                            }
+                        }
+                    }
+
+                }
+            }
+
+        });
+        store.load({
+            params : {
+                start : 0,
+                limit : 5
+            }
+        });
+        Ext.apply(this, {
+            renderTo: Ext.getBody(),
+            id:'grid08',
+            store : Ext.data.StoreManager.lookup("mystore"),
+            title:'会员充值信息管理',
+            selModel:selModel,
+            disableSelection: false,//值为TRUE，表示禁止选择行
+            closable:true,
+            border:' 1px solid black',
+            height : 400,
+            width : 500,
+
+            tbar:[
+                {
+                    text:'批量删除',
+                    handler: function() {
+                        me.dodeleteall()
+                    }
+                }
+                ,'-',
+                {
+                    text:'添加',
+                    id:'create',
+                    handler:function(){
+                        me.datainsert(me)
+                    }
+                }
+                ,'-',
+                {
+                    text:'查询',
+                    handler:function(){
+                        me.doselect();
+                    }
+                },{
+                    xtype:'textfield',
+                    emptyText:'请输入要查找的用户名',
+                    name:'text',
+                    id:'text1'
+                }
+                ,'-',
+                {
+                    text:'全部信息',
+                    handler:function(){
+                        Ext.getCmp("text1").reset(),
+                        me.doselect()
+                    }
+                }
+                ,'-',
+                {
+                    text:'充值',
+                    handler:function(){
+                        me.docharge()
+                    }
+                }
+            ],
+            columns : [
+                {text :"递增流水号", dataIndex:'id',align : "center"},          //可以渲染的列
+                {text :"用户名",dataIndex:'TBaMemberInfoByUserName.userName',menuDisabled:true,align : "center"},
+                {text:'付款账号',dataIndex:'payAccountNo',menuDisabled:true,align : "center"},
+                {text:'付款开户行',dataIndex:'payBank',menuDisabled:true,align : "center"},
+                {text :"收款账号", dataIndex:'recAccountNo',menuDisabled:true,align : "center"},          //可以渲染的列
+                {text :"收款开户行",dataIndex:'recBank',menuDisabled:true,align : "center"},
+                {text:'备注',dataIndex:'remark',menuDisabled:true,align : "center"},
+                {text:'金额',dataIndex:'totalMoney',renderer: Ext.util.Format.numberRenderer('0,000.00'),menuDisabled:true,align : "center"},
+                {text:'充值时间',dataIndex:'supplyTime',format:'Y年m月d日 H:i:s',menuDisabled:true,align : "center"},
+                {
+                    header: '操作',
+                    style:'text-align:center',
+                    renderer: function(){
+                        var display="";
+                        display+='<input type="button"  value="修改"  onclick="Util.doupdate()" />&nbsp;&nbsp;<input type="button"   value="删除" onClick="Util.dodelete()">';
+                        return display;
+                    }
+                }
+            ],
+
+            dockedItems : [{
+                xtype : "pagingtoolbar",
+                store : store,
+                dock : "bottom",
+                displayInfo : true
+            }]
+
+        });
+        this.center();
+        this.callParent();
+    },
+    datainsert:function(){
+        Ext.create('Ext.window.Window',{
+            id:'message08',
+            title:'信息插入',
+            width:300,
+            border:'false',
+            style:'text-align:center',
+            items:[
+                {
+                    xtype:'form',
+                    layout:'form',
+                    frame:true,
+                    border:false,
+                    margins:'5 10 5 5 ',
+                    defaults:{
+                        xtype:'textfield',
+                        labelAlign:'right',
+
+                        labelWidth:80
+                    },
+                    items:[
+                        {fieldLabel :"用户名",name:'classinfo.TBaMemberInfoByUserName.userName',align : "center"},
+                        {fieldLabel:'付款账号',name:'classinfo.payAccountNo',align : "center"},
+                        {fieldLabel:'付款开户行',name:'classinfo.payBank',align : "center"},
+                        {fieldLabel :"收款账号", name:'classinfo.recAccountNo',align : "center"},          //可以渲染的列
+                        {fieldLabel :"收款开户行",name:'classinfo.recBank',align : "center"},
+                        {fieldLabel:'备注',name:'classinfo.remark',align : "center"},
+                        {fieldLabel:'金额',name:'classinfo.totalMoney',renderer: Ext.util.Format.numberRenderer('0,000.00'),align : "center"},
+                        {xtype:'datefield',fieldLabel:'充值时间',name:'classinfo.supplyTime',value: new Date(),format:'Y年m月d日 H:i:s',align : "center"}
+                    ],
+                    buttons:[
+                        {
+                            text:'提交',
+                            handler:function(){
+                                var form=this.up('window').down('form').getForm();
+                                if(form.isValid()){
+                                    form.submit({
+                                        url:'/doinsert08',
+                                        success:function(form,action){
+
+                                            var msgcontent=Ext.JSON.decode(action.response.responseText);
+                                            if(msgcontent.msg){
+
+                                                Ext.Msg.alert('系统提示',msgcontent.message);
+                                                Ext.getCmp('message08').close();
+                                                Ext.getCmp('grid08').store.reload();
+                                                return;
+                                            }
+                                            Ext.Msg.alert('系统提示',msgcontent.message);
+                                        },
+                                        failure:function(form,action){
+                                            var msgcontent=Ext.JSON.decode(action.response.responseText);
+                                            Ext.getCmp('message08').close();
+                                            Ext.Msg.alert('系统提示',msgcontent.message);
+                                        }
+
+                                    });
+                                };
+                            }
+                        },{
+                            text:'取消',
+                            handler:function(){
+                                Ext.getCmp('message08').close();
+                            }
+                        }
+                    ]
+
+                }
+            ]
+        }).show().center()
+
+
+    },
+    doselect: function () {
+
+        Ext.getCmp("grid08").store.load({params:{text:Ext.getCmp("text1").getValue()}});
+
+    },
+    dodeleteall:function(){
+        var record= Ext.getCmp("grid07").getSelectionModel().getSelection();
+        if(record.length>0){
+            var list='';
+            for(var i= 0 , length= record.length;i<length;i++){
+                list+=record[i].get('id');
+                if (i != length - 1) {
+                    list += ',';
+                }
+            };
+            Ext.Msg.show({
+                title:'删除',
+                msg:'确定要删除'+record.length+'条数据吗？',
+                icon: Ext.MessageBox.WARNING,
+                buttons: Ext.MessageBox.YESNO,
+                fn:function(btn){
+                    if(btn=='yes'){
+                        Ext.Ajax.request({
+                            url: '/dodeleteall07?ids=' + list,
+                            success: function (response) {
+                                var msg = Ext.JSON.decode(response.responseText);
+
+                                var totalCount = Ext.getCmp('grid07').store.getTotalCount(); // 所有的记录数，不单单是当前页展示的数据
+                                var pageSize = Ext.getCmp('grid07').store.pageSize; // 一页上面展示的记录条数
+                                var curPage = Ext.getCmp('grid07').store.currentPage; // 当前页码
+                                var fromRecord = ((curPage - 1) * pageSize) + 1; // 当前页展示的起始记录号
+                                var toRecord = Math.min(curPage * pageSize, totalCount); // 当前页展示的结尾记录号
+                                var totalOnCurPage = toRecord - fromRecord + 1; // 当前页展示的记录条数
+                                var totalPageCount = Math.ceil(totalCount / pageSize); // 总的页数
+                                var delCount = length;// 删除的记录条数
+                                //若当前页是最后一页，且不是仅有的一页，且删除的记录数是当前页上的所有记录数
+                                if (curPage === totalPageCount && totalPageCount != 1 && delCount == totalOnCurPage)
+                                {
+                                    Ext.getCmp('grid07').store.currentPage-1;
+                                    Ext.getCmp('grid07').store.loadPage(Ext.getCmp('grid07').store.currentPage-1);
+                                }
+                                Ext.MessageBox.show({
+                                    title: '成功',
+                                    msg: msg.message,
+                                    icon: Ext.MessageBox.WARNING,
+                                    buttons: Ext.MessageBox.YES
+                                });
+                                Ext.getCmp('grid07').store.reload();
+                            },
+                            failure: function (response) {
+                                var msg = Ext.JSON.decode(response.responseText);
+                                Ext.MessageBox.show({
+                                    title: '失败',
+                                    msg: msg.msg,
+                                    icon: Ext.MessageBox.QUESTION,
+                                    buttons: Ext.MessageBox.YES
+                                });
+                            }
+                        });
+                    }
+                }
+            })
+
+        }else{
+            Ext.Msg.alert("提示","请先选中后再操作!")
+        }
+
+    },
+    docharge:function(){
+        var record=Ext.getCmp('grid08').getSelectionModel().getSelection()[0];
+        Ext.create('Ext.window.Window',{
+            id:'charge',
+            title:'充值',
+            width:300,
+            border:'false',
+            style:'text-align:center',
+            items:[
+                {
+                    xtype:'form',
+                    layout:'form',
+                    frame:true,
+                    border:false,
+                    margins:'5 10 5 5 ',
+                    defaults:{
+                        xtype:'textfield',
+                        labelAlign:'right',
+                        labelWidth:80
+                    },
+                    items:[
+                        {xtype:'hidden',fieldLabel :"递增流水号", name:'classinfo.id',value:record.get("id")},
+                        {xtype:'hidden',fieldLabel:'付款账号',name:'classinfo.payAccountNo',align : "center",value:record.get("payAccountNo")},
+                        {xtype:'hidden',fieldLabel:'付款开户行',name:'classinfo.payBank',align : "center",value:record.get("payBank")},
+                        {xtype:'hidden',fieldLabel :"收款账号", name:'classinfo.recAccountNo',align : "center",value:record.get("recAccountNo")},          //可以渲染的列
+                        {xtype:'hidden',fieldLabel :"收款开户行",name:'classinfo.recBank',align : "center",value:record.get("recBank")},
+                        {xtype:'hidden',fieldLabel:'备注',name:'classinfo.remark',align : "center",value:record.get("remark")},
+                        {
+                            name:'classinfo.TBaMemberInfoByUserName.userName',
+                            fieldLabel :"用户名",
+                            value:record.get('TBaMemberInfoByUserName.userName')
+                        },
+                        {fieldLabel :"金额",name:'classinfo.totalMoney',renderer: Ext.util.Format.numberRenderer('0,000.00'),align : "center"},
+                        {xtype:'datefield',fieldLabel:'充值时间',name:'classinfo.supplyTime',value: new Date(),format:'Y年m月d日 H:i:s',align : "center"}
+                    ],
+                    buttonAlign:'center',
+                    buttons:[
+                        {
+                            text:'提交',
+                            handler:function(){
+                                var form=this.up('window').down('form').getForm();
+                                if(form.isValid()){
+                                    form.submit({
+                                        url:'/docharge08',
+                                        success:function(form,action){
+
+                                            var msgcontent=Ext.JSON.decode(action.response.responseText);
+                                            if(msgcontent.msg){
+                                                Ext.getCmp('charge').close();
+                                                Ext.Msg.alert('系统提示',msgcontent.message);
+
+                                                Ext.getCmp('grid08').store.reload();
+                                                return;
+                                            }
+                                            Ext.Msg.alert('系统提示',msgcontent.message);
+                                        },
+                                        failure:function(form,action){
+                                            Ext.getCmp('charge').close();
+                                            var msgcontent=Ext.JSON.decode(action.response.responseText);
+                                            Ext.Msg.alert('系统提示',msgcontent.message);
+                                        }
+
+                                    });
+                                };
+                            }
+                        },{
+                            text:'取消',
+                            handler:function(){
+                                Ext.getCmp('charge').close();
+                            }
+                        }
+                    ]
+
+                }
+            ]
+        }).show().center()
+    }
+});
+
+Ext.define('Util',{
+    statics: {
+        doupdate:function (){
+            var record=Ext.getCmp('grid08').getSelectionModel().getSelection()[0];
+            Ext.create('Ext.window.Window',{
+                id:'message08',
+                title:'信息修改',
+                width:300,
+                border:'false',
+                style:'text-align:center',
+                items:[
+                    {
+                        xtype:'form',
+                        layout:'form',
+                        frame:true,
+                        border:false,
+                        margins:'5 10 5 5 ',
+                        defaults:{
+                            xtype:'textfield',
+                            labelAlign:'right',
+                            labelWidth:80
+                        },
+                        items:[
+                            {xtype:'hidden',fieldLabel :"递增流水号", name:'classinfo.id',value:record.get("id")},
+                            {
+                                name:'classinfo.TBaMemberInfoByUserName.userName',
+                                fieldLabel :"用户名",
+                                value:record.get("TBaMemberInfoByUserName.userName")
+                            },
+                            {fieldLabel:'付款账号',name:'classinfo.payAccountNo',align : "center",value:record.get("payAccountNo")},
+                            {fieldLabel:'付款开户行',name:'classinfo.payBank',align : "center",value:record.get("payBank")},
+                            {fieldLabel :"收款账号", name:'classinfo.recAccountNo',align : "center",value:record.get("recAccountNo")},          //可以渲染的列
+                            {fieldLabel :"收款开户行",name:'classinfo.recBank',align : "center",value:record.get("recBank")},
+                            {fieldLabel:'备注',name:'classinfo.remark',align : "center",value:record.get("remark")},
+                            {fieldLabel :"金额",name:'classinfo.totalMoney',align : "center",value:record.get("totalMoney")},
+                            {xtype:'datefield',fieldLabel:'充值时间',name:'classinfo.supplyTime',value: new Date(),format:'Y年m月d日 H:i:s',align : "center"}
+                        ],
+                        buttons:[
+                            {
+                                text:'提交',
+                                handler:function(){
+                                    var form=this.up('window').down('form').getForm();
+                                    if(form.isValid()){
+                                        form.submit({
+                                            url:'/doupdate08',
+                                            success:function(form,action){
+                                                Ext.getCmp('message08').close();
+                                                Ext.getCmp('grid08').store.reload();
+                                                var msgcontent=Ext.JSON.decode(action.response.responseText);
+                                                if(msgcontent.msg){
+                                                    Ext.Msg.alert('系统提示',msgcontent.message);
+                                                    return;
+                                                }
+                                                Ext.Msg.alert('系统提示',msgcontent.message);
+                                            },
+                                            failure:function(form,action){
+                                                var msgcontent=Ext.JSON.decode(action.response.responseText);
+                                                Ext.Msg.alert('系统提示',msgcontent.message);
+                                            }
+
+                                        });
+                                    };
+                                }
+                            },{
+                                text:'取消',
+                                handler:function(){
+                                    Ext.getCmp('message08').close();
+                                }
+                            }
+                        ]
+
+                    }
+                ]
+            }).show().center()
+        },
+        dodelete:function(){
+            var record= Ext.getCmp("grid08").getSelectionModel().getSelection()[0];
+            Ext.create('Ext.window.Window',{
+                id:'del08',
+                title:'信息删除',
+                width:300,
+                border:'false',
+                style:'text-align:center',
+                items:[
+                    {
+                        xtype:'form',
+                        layout:'form',
+                        frame:true,
+                        border:false,
+                        margins:'5 10 5 5 ',
+                        defaults:{
+                            xtype:'textfield',
+                            labelAlign:'right',
+                            labelWidth:80
+                        },
+                        items:[
+                            {xtype:'hidden',fieldLabel :"递增流水号", name:'classinfo.id',value:record.get("id")},
+                            {
+                                name:'classinfo.TBaMemberInfoByUserName.userName',
+                                fieldLabel :"用户名",
+                                readOnly:true,
+                                value:record.get("TBaMemberInfoByUserName.userName")
+                            },
+                            {fieldLabel:'付款账号',name:'classinfo.payAccountNo',align : "center",value:record.get("payAccountNo"),readOnly:true},
+                            {fieldLabel:'付款开户行',name:'classinfo.payBank',align : "center",value:record.get("payBank"),readOnly:true},
+                            {fieldLabel :"收款账号", name:'classinfo.recAccountNo',align : "center",value:record.get("recAccountNo"),readOnly:true},          //可以渲染的列
+                            {fieldLabel :"收款开户行",name:'classinfo.recBank',align : "center",value:record.get("recBank"),readOnly:true},
+                            {fieldLabel:'备注',name:'classinfo.remark',align : "center",value:record.get("remark"),readOnly:true},
+                            {fieldLabel :"金额",name:'classinfo.totalMoney',value:record.get("totalMoney"),readOnly:true,renderer: Ext.util.Format.numberRenderer('0,000.00'),align : "center"},
+                            {fieldLabel:'充值时间',name:'classinfo.supplyTime',align : "center",value:record.get("supplyTime"),readOnly:true}
+                        ],
+                        buttons:[
+                            {
+                                text:'确认删除',
+                                handler:function(){
+                                    var form=this.up('window').down('form').getForm();
+                                    if(form.isValid()){
+                                        form.submit({
+                                            url:'/dodelete08',
+                                            success:function(form,action){
+                                                Ext.getCmp('del08').close();
+                                                var msgcontent=Ext.JSON.decode(action.response.responseText);
+
+                                                var totalCount = Ext.getCmp('grid08').store.getTotalCount(); // 所有的记录数，不单单是当前页展示的数据
+                                                var pageSize = Ext.getCmp('grid08').store.pageSize; // 一页上面展示的记录条数
+                                                var curPage = Ext.getCmp('grid08').store.currentPage; // 当前页码
+                                                var fromRecord = ((curPage - 1) * pageSize) + 1; // 当前页展示的起始记录号
+                                                var toRecord = Math.min(curPage * pageSize, totalCount); // 当前页展示的结尾记录号
+                                                var totalOnCurPage = toRecord - fromRecord + 1; // 当前页展示的记录条数
+                                                var totalPageCount = Math.ceil(totalCount / pageSize); // 总的页数
+                                                var delCount = 1;// 删除的记录条数
+                                                //若当前页是最后一页，且不是仅有的一页，且删除的记录数是当前页上的所有记录数
+                                                if (curPage === totalPageCount && totalPageCount != 1 && delCount == totalOnCurPage)
+                                                {
+                                                    Ext.getCmp('grid08').store.currentPage-1;
+                                                    Ext.getCmp('grid08').store.loadPage(Ext.getCmp('grid08').store.currentPage-1);
+                                                }
+                                                Ext.MessageBox.show({
+                                                    title: '成功',
+                                                    msg: msgcontent.message,
+                                                    icon: Ext.MessageBox.WARNING,
+                                                    buttons: Ext.MessageBox.YES
+                                                });
+                                                Ext.getCmp('grid08').store.reload();
+                                            },
+                                            failure:function(form,action){
+                                                var msgcontent=Ext.JSON.decode(action.response.responseText);
+                                                Ext.Msg.alert('系统提示',msgcontent.message);
+
+                                            }
+                                        });
+                                    };
+                                }
+                            },{
+                                text:'取消',
+                                handler:function(){
+                                    Ext.getCmp('del08').close();
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }).show().center()
+        }
+    }
+});
+
+
+
